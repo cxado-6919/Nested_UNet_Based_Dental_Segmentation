@@ -14,6 +14,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
     best_iou = 0.0
     train_losses = []
     val_losses = []
+    num_classes = 32
 
     for epoch in range(num_epochs):
         model.train()
@@ -23,13 +24,17 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
             masks = masks.to(device)
             optimizer.zero_grad()
             outputs = model(images)
-            loss = criterion(outputs, masks)
+            # deep supervision 사용 시 여러 출력에 대해 손실 계산 후 평균
+            if isinstance(outputs, (list, tuple)):
+                loss = sum([criterion(out, masks) for out in outputs]) / len(outputs)
+            else:
+                loss = criterion(outputs, masks)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
         avg_train_loss = train_loss / len(train_loader)
         train_losses.append(avg_train_loss)
-
+        
         model.eval()
         val_loss = 0.0
         total_iou = 0.0
@@ -39,29 +44,33 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
                 images = images.to(device)
                 masks = masks.to(device)
                 outputs = model(images)
-                loss = criterion(outputs, masks)
+                if isinstance(outputs, (list, tuple)):
+                    loss = sum([criterion(out, masks) for out in outputs]) / len(outputs)
+                    preds = torch.argmax(outputs[-1], dim=1)
+                else:
+                    loss = criterion(outputs, masks)
+                    preds = torch.argmax(outputs, dim=1)
                 val_loss += loss.item()
-                preds = torch.argmax(outputs, dim=1)
-                batch_iou = iou_score(preds, masks, num_classes=32)
+                batch_iou = iou_score(preds, masks, num_classes)
                 total_iou += batch_iou
                 count += 1
         avg_val_loss = val_loss / len(val_loader)
         avg_val_iou = total_iou / count
         val_losses.append(avg_val_loss)
-
+        
         print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val IoU: {avg_val_iou:.4f}")
-
-        # 모델 체크포인트 저장
+        
         if avg_val_iou > best_iou:
             best_iou = avg_val_iou
-            torch.save(model.state_dict(), checkpoint_path)
+            torch.save(model.state_dict(), "best_model_checkpoint.pth")
             print("Best model saved!")
-
+        
         scheduler.step(avg_val_loss)
         early_stopping(avg_val_loss)
         if early_stopping.early_stop:
             print("Early stopping triggered!")
             break
+
 
     # 학습 loss 그래프 시각화
     epochs = range(1, len(train_losses)+1)
