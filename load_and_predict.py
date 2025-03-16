@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from albumentations import Compose, Resize, Normalize
 from albumentations.pytorch import ToTensorV2
-from modules.NestedUNet import NestedUNet
+from modules.NestedUNet import NestedUNet  # 수정: modules 폴더 경로 제거
 
 """
 모델을 학습하는 데에 kaggle의 Teeth Segmentation on dental X-ray images Dataset을 사용하였고
@@ -41,7 +41,7 @@ class TestDataset(torch.utils.data.Dataset):
 
 # 모델 생성 및 체크포인트 불러오기
 num_classes = 32
-model = NestedUNet(in_channels=3, out_channels=num_classes)
+model = NestedUNet(in_channels=3, out_channels=num_classes, deep_supervision=True)
 checkpoint_path = "best_model_checkpoint.pth"  # main.py에서 저장한 checkpoint 파일 이름
 state_dict = torch.load(checkpoint_path, map_location='cpu')
 model.load_state_dict(state_dict)
@@ -51,7 +51,7 @@ model.to(device)
 model.eval()
 
 # 테스트 이미지 디렉토리 (사용자 경로로 수정 필요)
-images_dir = r"Your_path_here"  
+images_dir = r"C:\Users\CXADO6919\Desktop\Datasets\Dental_segmentation\Panoramic Dental X-rays With Segmented Mandibles\Panoramic Dental X-rays With Segmented Mandibles\DentalPanoramicXrays\Images"  
 test_dataset = TestDataset(images_dir=images_dir, transform=test_transform)
 print("Test image IDs:", test_dataset.image_ids)
 
