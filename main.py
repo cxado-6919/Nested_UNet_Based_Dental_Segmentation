@@ -1,10 +1,12 @@
 import os
 import torch
 from torch.utils.data import DataLoader, random_split
-from modules.data import XRayDataset, get_train_transform, get_val_test_transform
+from modules.data import XRayDataset, train_transform, val_test_transform
 from modules.train import train_model
 from modules.utils import set_seed
 from modules.visualize import visualize_prediction
+
+
 
 # seed 설정 
 set_seed(42)
@@ -14,7 +16,7 @@ images_dir = 'your_path_here'
 masks_dir = 'your_path_here'
 
 # 데이터셋 생성 및 분할
-full_dataset = XRayDataset(images_dir, masks_dir, transform=get_train_transform())
+full_dataset = XRayDataset(images_dir, masks_dir, transform=train_transform())
 total_size = len(full_dataset)
 train_size = int(0.7 * total_size)
 val_size = int(0.15 * total_size)
@@ -22,8 +24,8 @@ test_size = total_size - train_size - val_size
 train_dataset, val_dataset, test_dataset = random_split(full_dataset, [train_size, val_size, test_size])
 
 # 검증/테스트 데이터셋에는 augmentation 없이 transform 적용
-val_dataset.dataset.transform = get_val_test_transform()
-test_dataset.dataset.transform = get_val_test_transform()
+val_dataset.dataset.transform = val_test_transform()
+test_dataset.dataset.transform = val_test_transform()
 
 # DataLoader 구성
 batch_size = 4
