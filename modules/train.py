@@ -6,10 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_path="best_model_checkpoint.pth"):
-    optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-6)
+    optimizer = optim.Adam(model.parameters(), lr=3e-5, weight_decay=1e-6)
     criterion = CombinedLoss(weight_ce=1.0, weight_dice=1.0)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
-    early_stopping = EarlyStopping(patience=15, verbose=True, delta=0.001)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+    early_stopping = EarlyStopping(patience=10, verbose=True, delta=0.001)
 
     best_iou = 0.0
     train_losses = []
@@ -66,7 +66,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
             print("Best model saved!")
         
         scheduler.step(avg_val_loss)
-        early_stopping(avg_val_loss)
+        early_stopping(avg_val_iou)
         if early_stopping.early_stop:
             print("Early stopping triggered!")
             break
