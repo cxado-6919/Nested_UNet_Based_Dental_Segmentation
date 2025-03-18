@@ -9,12 +9,13 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
     optimizer = optim.Adam(model.parameters(), lr=3e-5, weight_decay=1e-6)
     criterion = CombinedLoss(weight_ce=1.0, weight_dice=1.0)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=True)
-    early_stopping = EarlyStopping(patience=10, verbose=True, delta=0.001)
+    early_stopping = EarlyStopping(patience=10, verbose=True, delta=0.0005)
 
     best_iou = 0.0
     train_losses = []
     val_losses = []
     num_classes = 32
+    early_stopping_start_epoch = 15
 
     for epoch in range(num_epochs):
         model.train()
@@ -66,10 +67,11 @@ def train_model(model, train_loader, val_loader, num_epochs, device, checkpoint_
             print("Best model saved!")
         
         scheduler.step(avg_val_loss)
-        early_stopping(avg_val_iou)
-        if early_stopping.early_stop:
-            print("Early stopping triggered!")
-            break
+        if epoch >= early_stopping_start_epoch:
+            early_stopping(-avg_val_iou)  # IoU 최대화
+            if early_stopping.early_stop:
+                print(f"Early stopping triggered at epoch {epoch+1}")
+                break
 
 
     # 학습 loss 그래프 시각화
