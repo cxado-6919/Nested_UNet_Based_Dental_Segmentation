@@ -6,15 +6,18 @@ from modules.train import train_model
 from modules.NestedUNet import NestedUNet
 from modules.utils import set_seed
 from modules.visualize import visualize_prediction
+import kagglehub
 
+path = kagglehub.dataset_download("humansintheloop/teeth-segmentation-on-dental-x-ray-images")
 
+print("Path to dataset files:", path)
 
 # seed 설정 
 set_seed(42)
 
 # 데이터셋 경로 설정 
-images_dir = 'your_path_here'
-masks_dir = 'your_path_here'
+images_dir = '/home/elicer/.cache/kagglehub/datasets/humansintheloop/teeth-segmentation-on-dental-x-ray-images/versions/1/Teeth Segmentation PNG/d2/img'
+masks_dir = '/home/elicer/.cache/kagglehub/datasets/humansintheloop/teeth-segmentation-on-dental-x-ray-images/versions/1/Teeth Segmentation PNG/d2/masks_machine'
 
 # 데이터셋 생성 및 분할
 full_dataset = XRayDataset(images_dir, masks_dir, transform=train_transform)
